@@ -150,8 +150,10 @@ sub gen_tlv_type($$$) {
 
 	print <<EOF;
 		case $id:
-			if ($idx_word & $idx_bit)
+			if ($idx_word & $idx_bit) {
+				printf("Breaking!\\n");
 				break;
+				}
 
 			$idx_word |= $idx_bit;
 EOF
@@ -208,10 +210,12 @@ EOF
 	memset(res, 0, sizeof(*res));
 
 	__qmi_alloc_reset();
+
+	printf("Iterating through tlvs\\n");
 	while ((tlv = tlv_get_next(&tlv_buf, &tlv_len)) != NULL) {
 		unsigned int cur_tlv_len = le16_to_cpu(tlv->len);
 		unsigned int ofs = 0;
-
+		printf("TLV type is %d\\n", tlv->type);
 		switch(tlv->type) {
 EOF
 		foreach my $field (@$data) {
@@ -221,6 +225,7 @@ EOF
 
 		print <<EOF;
 		default:
+			printf("Fell through\n");
 			break;
 		}
 	}

@@ -239,6 +239,7 @@ static bool __uqmi_run_commands(struct qmi_dev *qmi, bool option)
 			req.no_error_cb = true;
 			if (qmi_request_wait(qmi, &req)) {
 				uqmi_add_error(qmi_get_error_str(req.ret));
+				printf("%s\n", qmi_get_error_str(req.ret));
 				do_break = true;
 			}
 		} else if (res == QMI_CMD_EXIT) {

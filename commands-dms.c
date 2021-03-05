@@ -325,7 +325,7 @@ static void cmd_dms_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, st
 	struct qmi_dms_uim_get_imsi_response res;
 
 	qmi_parse_dms_uim_get_imsi_response(msg, &res);
-	printf("%d\n", res.data.imsi);
+	printf("Data is %s\n", res.data.imsi);
 	if (res.data.imsi)
 		blobmsg_add_string(&status, NULL, res.data.imsi);
 }

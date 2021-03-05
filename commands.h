@@ -23,6 +23,7 @@
 #define __UQMI_COMMANDS_H
 
 #include <stdbool.h>
+#include <inttypes.h>
 #include "commands-wds.h"
 #include "commands-dms.h"
 #include "commands-nas.h"
