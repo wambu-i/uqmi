@@ -28,4 +28,4 @@
 #define uim_helptext \
 		"  --uim-verify-pin1 <pin>:          Verify PIN1 (new devices)\n" \
 		"  --uim-verify-pin2 <pin>:          Verify PIN2 (new devices)\n" \
-		"  --uim-get-iccid <file path>:		 Get ICCID from SIM using specified file path" \
+		"  --uim-get-iccid <file path>:		 Get ICCID from SIM using specified file path\n"

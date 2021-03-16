@@ -110,13 +110,14 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 	return QMI_CMD_REQUEST;
 }
 
-static enum qmi_cmd_request
+#define cmd_uim_get_iccid_cb no_cb
+static enum qmi_cmd_result
 cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
-	guint16 id = 0;
+	uint16_t id = 0;
 	uint8_t *path = NULL;
 
-	printf("Arguments passed %c\n", arg);
+	printf("Arguments passed %s\n", arg);
 
 	if (!get_sim_file_id_and_path_with_separator(arg, &id, &path, ","))
 		return QMI_CMD_EXIT;
