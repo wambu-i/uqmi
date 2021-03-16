@@ -303,6 +303,7 @@ cmd_dms_unblock_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struc
 	return QMI_CMD_REQUEST;
 }
 
+/*
 static void cmd_dms_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_dms_uim_get_iccid_response res;
@@ -319,6 +320,7 @@ cmd_dms_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 	qmi_set_dms_uim_get_iccid_request(msg);
 	return QMI_CMD_REQUEST;
 }
+*/
 
 static void cmd_dms_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {

@@ -19,6 +19,61 @@
  * Boston, MA 02110-1301 USA.
  */
 
+static char **split_string(const char *string) {
+    printf("Splitting strings!\n");
+	char **result = malloc (sizeof (char *) * 3);
+	char *tmp = (char *) string;
+	int i = 0;
+
+	result[i] = strtok(tmp, ",");
+
+	while (result[i] != NULL) {
+        printf("Here we go\n");
+		result[++i] = strtok(NULL, ",");
+	}
+
+	return result;
+}
+
+static bool
+get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *file_id, uint8_t **file_path, const char *separator)
+{
+	int i;
+	char **split;
+
+	split = split_string(file_path_str);
+
+	if (!split) {
+		fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
+		return false;
+	}
+
+    *file_path = malloc(sizeof(uint8_t) * ARRAY_SIZE(split));
+
+	*file_id = 0;
+
+	for (i = 0; split[i]; i++) {
+		unsigned long item = (strtoul (split[i], NULL, 16)) & 0xFFFF;
+		if (split[i + 1]) {
+			uint8_t val = item & 0xFF;
+            (*file_path)[i] = val;
+            val = (item >> 8) & 0xFF;
+            (*file_path)[i + 1] = val;
+        } else {
+            *file_id = item;
+        }
+	}
+
+	free(split);
+	if (*file_id == 0) {
+        free(*file_path);
+        fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
+        return false;
+    }
+
+	return true;
+}
+
 #define cmd_uim_verify_pin1_cb no_cb
 static enum qmi_cmd_result
 cmd_uim_verify_pin1_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
@@ -52,5 +107,35 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 		)
 	};
 	qmi_set_uim_verify_pin_request(msg, &data);
+	return QMI_CMD_REQUEST;
+}
+
+static enum qmi_cmd_request
+cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	guint16 id = 0;
+	uint8_t *path = NULL;
+
+	printf("Arguments passed %c\n", arg);
+
+	if (!get_sim_file_id_and_path_with_separator(arg, &id, &path, ","))
+		return QMI_CMD_EXIT;
+
+	struct qmi_uim_read_transparent_request data = {
+		QMI_INIT_SEQUENCE(session_information,
+			.session_type = QMI_UIM_SESSION_TYPE_PRIMARY_GW_PROVISIONING,
+			""
+		),
+		QMI_INIT_SEQUENCE(file,
+			.file_id = id,
+			.file_path = path,
+			.file_path_n = ARRAY_SIZE(&path)
+		),
+		QMI_INIT_SEQUENCE(read_information,
+			.offset = 0,
+			.length = 0
+		)
+	};
+	qmi_set_uim_read_transparent_request(msg, &data);
 	return QMI_CMD_REQUEST;
 }
