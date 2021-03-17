@@ -84,7 +84,7 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 		return false;
 	}
 
-    *file_path = malloc(sizeof(uint8_t) * ARRAY_SIZE(split));
+	*file_path = malloc(sizeof(uint8_t) * ARRAY_SIZE(split));
 
 	*file_id = 0;
 
@@ -92,20 +92,21 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 		unsigned long item = (strtoul (split[i], NULL, 16)) & 0xFFFF;
 		if (split[i + 1]) {
 			uint8_t val = item & 0xFF;
-            (*file_path)[i] = val;
-            val = (item >> 8) & 0xFF;
-            (*file_path)[i + 1] = val;
-        } else {
-            *file_id = item;
-        }
+			(*file_path)[i] = val;
+			val = (item >> 8) & 0xFF;
+			(*file_path)[i + 1] = val;
+		}
+		else {
+			*file_id = item;
+		}
 	}
 
 	free(split);
 	if (*file_id == 0) {
-        free(*file_path);
-        fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
-        return false;
-    }
+		free(*file_path);
+		fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
+		return false;
+	}
 
 	return true;
 }
