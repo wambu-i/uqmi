@@ -56,7 +56,6 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 }
 
 static char **split_string(const char *string) {
-    printf("Splitting strings!\n");
 	char **result = malloc (sizeof (char *) * 3);
 	char *tmp = (char *) string;
 	int i = 0;
@@ -64,7 +63,6 @@ static char **split_string(const char *string) {
 	result[i] = strtok(tmp, ",");
 
 	while (result[i] != NULL) {
-        printf("Here we go\n");
 		result[++i] = strtok(NULL, ",");
 	}
 
