@@ -135,18 +135,19 @@ cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
 			.session_type = QMI_UIM_SESSION_TYPE_PRIMARY_GW_PROVISIONING,
-			""
+			.application_identifier = "{}"
 		),
 		QMI_INIT_SEQUENCE(file,
 			.file_id = id,
 			.file_path = path,
-			.file_path_n = ARRAY_SIZE(&path)
+			.file_path_n = ARRAY_SIZE(&path) + 1
 		),
 		QMI_INIT_SEQUENCE(read_information,
 			.offset = 0,
 			.length = 0
 		)
 	};
+
 	qmi_set_uim_read_transparent_request(msg, &data);
 	return QMI_CMD_REQUEST;
 }
