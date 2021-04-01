@@ -23,9 +23,11 @@
 	__uqmi_command(uim_verify_pin1, uim-verify-pin1, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_verify_pin2, uim-verify-pin2, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_iccid, uim-get-iccid, required, QMI_SERVICE_UIM) \
+	__uqmi_command(uim_get_imsi, uim-get-imsi, required, QMI_SERVICE_UIM) \
 
 
 #define uim_helptext \
 		"  --uim-verify-pin1 <pin>:          Verify PIN1 (new devices)\n" \
 		"  --uim-verify-pin2 <pin>:          Verify PIN2 (new devices)\n" \
-		"  --uim-get-iccid <file path>:      Get ICCID from SIM using specified file path\n"
+		"  --uim-get-iccid <file path>:      Get ICCID from SIM using specified file path\n" \
+		"  --uim-get-imsi <file path>:       Get IMSIfrom SIM using specified file path\n"

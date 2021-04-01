@@ -116,6 +116,13 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
+		char tmp[2];
+		int len = res.data.read_result_n;
+		char result[len * 2];
+		for (int i = 0; i < len; i++) {
+			sprintf(tmp, "%02X", res.data.read_result[i]);
+			printf("Tmp - %s\n", tmp);
+		}
 		printf("SW1 %d\n", res.data.card_result.sw1);
 	}
 	else {
@@ -124,6 +131,57 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 }
 static enum qmi_cmd_result
 cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	uint16_t id = 0;
+	uint8_t *path = NULL;
+
+
+	if (!get_sim_file_id_and_path_with_separator(arg, &id, &path, ","))
+		return QMI_CMD_EXIT;
+
+	struct qmi_uim_read_transparent_request data = {
+		QMI_INIT_SEQUENCE(session_information,
+			.session_type = QMI_UIM_SESSION_TYPE_PRIMARY_GW_PROVISIONING,
+			.application_identifier = "{}"
+		),
+		QMI_INIT_SEQUENCE(file,
+			.file_id = id,
+			.file_path = path,
+			.file_path_n = ARRAY_SIZE(&path) + 1
+		),
+		QMI_INIT_SEQUENCE(read_information,
+			.offset = 0,
+			.length = 0
+		)
+	};
+
+	qmi_set_uim_read_transparent_request(msg, &data);
+	return QMI_CMD_REQUEST;
+}
+
+static void
+cmd_uim_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+{
+	struct qmi_uim_read_transparent_response res;
+	qmi_parse_uim_read_transparent_response(msg, &res);
+
+	if (res.set.card_result) {
+		char tmp[2];
+		int len = res.data.read_result_n;
+		char result[len * 2];
+		for (int i = 0; i < len; i++) {
+			sprintf(tmp, "%02X", res.data.read_result[i]);
+			printf("Tmp - %s\n", tmp);
+		}
+		printf("SW1 %d\n", res.data.card_result.sw1);
+	}
+	else {
+		printf("Error getting information!\n");
+	}
+}
+
+static enum qmi_cmd_result
+cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
 	uint16_t id = 0;
 	uint8_t *path = NULL;
