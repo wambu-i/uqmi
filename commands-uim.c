@@ -56,21 +56,46 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 }
 
 static char **split_string(const char *string) {
-	char **result = malloc (sizeof (char *) * 3);
+	char **result = malloc (sizeof (char *) * 10);
 	char *tmp = (char *) string;
 	int i = 0;
+	char *token;
 
-	result[i] = strtok(tmp, ",");
+	token = strtok(tmp, ",");
 
-	while (result[i] != NULL) {
-		result[++i] = strtok(NULL, ",");
+	while (token != NULL) {
+		result[i++] = token;
+		token = strtok(NULL, ",");
 	}
 
 	return result;
 }
 
+static stack *create_stack() {
+    stack *new = malloc(sizeof(*new));
+    if (!new) {
+        fprintf(stderr, "Could not allocate new memory!");
+	return NULL;
+    }
+
+    new->top = -1;
+    new->len = 0;
+    new->args = malloc(sizeof(uint8_t) * MAX);
+
+    return new;
+}
+
+
+static bool push(stack *stack, uint8_t val) {
+    if (stack->top == MAX - 1) return false;
+    stack->args[++stack->top] = val;
+    stack->len++;
+    return true;
+}
+
+
 static bool
-get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *file_id, uint8_t **file_path, const char *separator)
+get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *file_id, stack *file_stack, const char *separator)
 {
 	int i;
 	char **split;
@@ -82,28 +107,18 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 		return false;
 	}
 
-	*file_path = malloc(sizeof(uint8_t) * ARRAY_SIZE(split));
-
 	*file_id = 0;
 
 	for (i = 0; split[i]; i++) {
 		unsigned long item = (strtoul (split[i], NULL, 16)) & 0xFFFF;
 		if (split[i + 1]) {
 			uint8_t val = item & 0xFF;
-			(*file_path)[i] = val;
-			val = (item >> 8) & 0xFF;
-			(*file_path)[i + 1] = val;
-		}
-		else {
-			*file_id = item;
-		}
-	}
-
-	free(split);
-	if (*file_id == 0) {
-		free(*file_path);
-		fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
-		return false;
+			push(file_stack, val);
+            		val = (item >> 8) & 0xFF;
+            		push(file_stack, val);
+        	} else {
+            		*file_id = item;
+        	}
 	}
 
 	return true;
@@ -136,10 +151,17 @@ cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 {
 	uint16_t id = 0;
 	uint8_t *path = NULL;
+	stack *new = create_stack();
 
-
-	if (!get_sim_file_id_and_path_with_separator(arg, &id, &path, ","))
+	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
 		return QMI_CMD_EXIT;
+
+	printf("Len of arguments %d\n", new->len);
+
+	path = new->args;
+	for (int i = 0; i < new->len; i++) {
+                printf("Argument at %d is %d\n", i, path[i]);
+        }
 
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
@@ -149,7 +171,7 @@ cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 		QMI_INIT_SEQUENCE(file,
 			.file_id = id,
 			.file_path = path,
-			.file_path_n = ARRAY_SIZE(&path) + 1
+			.file_path_n = new->len
 		),
 		QMI_INIT_SEQUENCE(read_information,
 			.offset = 0,
@@ -187,9 +209,17 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 	uint16_t id = 0;
 	uint8_t *path = NULL;
 
+	stack *new = create_stack();
 
-	if (!get_sim_file_id_and_path_with_separator(arg, &id, &path, ","))
+	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
 		return QMI_CMD_EXIT;
+
+	printf("Len of arguments %d\n", new->len);
+
+	path = new->args;
+	for (int i = 0; i < new->len; i++) {
+		printf("Argument at %d is %d\n", i, path[i]);
+	}
 
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
@@ -199,7 +229,7 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 		QMI_INIT_SEQUENCE(file,
 			.file_id = id,
 			.file_path = path,
-			.file_path_n = ARRAY_SIZE(&path) + 1
+			.file_path_n = new->len
 		),
 		QMI_INIT_SEQUENCE(read_information,
 			.offset = 0,
