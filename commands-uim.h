@@ -22,7 +22,7 @@
 #define __uqmi_uim_commands												\
 	__uqmi_command(uim_verify_pin1, uim-verify-pin1, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_verify_pin2, uim-verify-pin2, required, QMI_SERVICE_UIM), \
-	__uqmi_command(uim_get_iccid, uim-get-iccid, required, QMI_SERVICE_UIM) \
+	__uqmi_command(uim_get_iccid, uim-get-iccid, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_imsi, uim-get-imsi, required, QMI_SERVICE_UIM) \
 
 

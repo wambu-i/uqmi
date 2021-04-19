@@ -116,14 +116,16 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
-		char tmp[2];
 		int len = res.data.read_result_n;
+		char tmp[10];
 		char result[len * 2];
+		memset(result, 0, len * 2);
 		for (int i = 0; i < len; i++) {
 			sprintf(tmp, "%02X", res.data.read_result[i]);
 			printf("Tmp - %s\n", tmp);
+			strcat(result, tmp);
 		}
-		printf("SW1 %d\n", res.data.card_result.sw1);
+		printf("ICCID is %s\n", result);
 	}
 	else {
 		printf("Error getting information!\n");
@@ -166,9 +168,8 @@ cmd_uim_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
-		char tmp[2];
+		char tmp[5];
 		int len = res.data.read_result_n;
-		char result[len * 2];
 		for (int i = 0; i < len; i++) {
 			sprintf(tmp, "%02X", res.data.read_result[i]);
 			printf("Tmp - %s\n", tmp);
