@@ -31,13 +31,3 @@
 		"  --uim-verify-pin2 <pin>:          Verify PIN2 (new devices)\n" \
 		"  --uim-get-iccid <file path>:      Get ICCID from SIM using specified file path\n" \
 		"  --uim-get-imsi <file path>:       Get IMSIfrom SIM using specified file path\n"
-
-#define MAX 10
-
-typedef struct stack stack;
-
-struct stack {
-    int top;
-    int len;
-    uint8_t *args;
-};

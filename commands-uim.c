@@ -19,6 +19,16 @@
  * Boston, MA 02110-1301 USA.
  */
 
+#define MAX 10
+
+typedef struct stack stack;
+
+struct stack {
+    int top;
+    int len;
+    uint8_t *args;
+};
+
 #define cmd_uim_verify_pin1_cb no_cb
 static enum qmi_cmd_result
 cmd_uim_verify_pin1_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
@@ -56,7 +66,7 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 }
 
 static char **split_string(const char *string) {
-	char **result = malloc (sizeof (char *) * 10);
+	char **result = malloc (sizeof (char *) * MAX);
 	char *tmp = (char *) string;
 	int i = 0;
 	char *token;
@@ -85,14 +95,12 @@ static stack *create_stack() {
     return new;
 }
 
-
 static bool push(stack *stack, uint8_t val) {
     if (stack->top == MAX - 1) return false;
     stack->args[++stack->top] = val;
     stack->len++;
     return true;
 }
-
 
 static bool
 get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *file_id, stack *file_stack, const char *separator)
@@ -114,11 +122,18 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 		if (split[i + 1]) {
 			uint8_t val = item & 0xFF;
 			push(file_stack, val);
-            		val = (item >> 8) & 0xFF;
-            		push(file_stack, val);
-        	} else {
-            		*file_id = item;
-        	}
+			val = (item >> 8) & 0xFF;
+			push(file_stack, val);
+		} else {
+			*file_id = item;
+		}
+	}
+
+	free(split);
+	if (*file_id == 0) {
+		free(*file_path);
+		fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
+		return false;
 	}
 
 	return true;
@@ -132,7 +147,7 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 
 	if (res.set.card_result) {
 		int len = res.data.read_result_n;
-		char tmp[10];
+		char tmp[MAX];
 		char result[len * 2];
 		memset(result, 0, len * 2);
 		for (int i = 0; i < len; i++) {
@@ -180,6 +195,8 @@ cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 	};
 
 	qmi_set_uim_read_transparent_request(msg, &data);
+
+	free(new);
 	return QMI_CMD_REQUEST;
 }
 
@@ -238,5 +255,48 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 	};
 
 	qmi_set_uim_read_transparent_request(msg, &data);
+
+	free(new);
+	return QMI_CMD_REQUEST;
+}
+
+#define cmd_uim_read_transparent_cb no_cb
+static enum qmi_cmd_result
+cmd_uim_read_transparent_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	uint16_t id = 0;
+	uint8_t *path = NULL;
+
+	stack *new = create_stack();
+
+	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
+		return QMI_CMD_EXIT;
+
+	printf("Len of arguments %d\n", new->len);
+
+	path = new->args;
+	for (int i = 0; i < new->len; i++) {
+		printf("Argument at %d is %d\n", i, path[i]);
+	}
+
+	struct qmi_uim_read_transparent_request data = {
+		QMI_INIT_SEQUENCE(session_information,
+			.session_type = QMI_UIM_SESSION_TYPE_PRIMARY_GW_PROVISIONING,
+			.application_identifier = "{}"
+		),
+		QMI_INIT_SEQUENCE(file,
+			.file_id = id,
+			.file_path = path,
+			.file_path_n = new->len
+		),
+		QMI_INIT_SEQUENCE(read_information,
+			.offset = 0,
+			.length = 0
+		)
+	};
+
+	qmi_set_uim_read_transparent_request(msg, &data);
+
+	free(new);
 	return QMI_CMD_REQUEST;
 }
