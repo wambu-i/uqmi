@@ -24,7 +24,7 @@
 	__uqmi_command(uim_verify_pin2, uim-verify-pin2, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_iccid, uim-get-iccid, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_imsi, uim-get-imsi, required, QMI_SERVICE_UIM), \
-	__uqmi_command(uim_read_transparent, uim-read-transparent, QMI_SERVICE_UIM) \
+	__uqmi_command(uim_read_transparent, uim-read-transparent, required, QMI_SERVICE_UIM) \
 
 #define uim_helptext \
 		"  --uim-verify-pin1 <pin>:          Verify PIN1 (new devices)\n" \

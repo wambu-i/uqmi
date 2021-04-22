@@ -131,7 +131,6 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 
 	free(split);
 	if (*file_id == 0) {
-		free(*file_path);
 		fprintf(stderr, "error: invalid file path given: '%s'\n", file_path_str);
 		return false;
 	}
