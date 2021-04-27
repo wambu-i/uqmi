@@ -21,11 +21,13 @@
 
 #define MAX 10
 
-static struct {
+typedef struct stack stack;
+
+struct stack {
     int top;
     int len;
     uint8_t *args;
-} stack;
+};
 
 static struct {
 	QmiUimPinId pin_id;
@@ -305,13 +307,23 @@ cmd_uim_read_transparent_prepare(struct qmi_dev *qmi, struct qmi_request *req, s
 	return QMI_CMD_REQUEST;
 }
 
+#define cmd_uim_set_pin_cb no_cb
+static enum qmi_cmd_result
+cmd_uim_set_pin_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	printf("PIN is provided as %s\n", arg);
+	uim_req_data.pin = arg;
+	return QMI_CMD_DONE;
+}
+
 static enum qmi_cmd_result
 cmd_uim_set_pin_protection_prepare(struct qmi_msg *msg, char *arg)
 {
 	if (!uim_req_data.pin) {
-		uqmi_add_error("Missing argument");
+		uqmi_add_error("Sucks - Missing argument");
 		return QMI_CMD_EXIT;
 	}
+	printf("Arg is %s, pin is %s, and id is %d\n", arg, uim_req_data.pin, uim_req_data.pin_id);
 
 	int is_enabled;
 	if (strcasecmp(arg, "disabled") == 0)
@@ -327,11 +339,11 @@ cmd_uim_set_pin_protection_prepare(struct qmi_msg *msg, char *arg)
 		QMI_INIT_SEQUENCE(info,
 			.pin_id = uim_req_data.pin_id
 		),
-		QMI_INIT_PTR(info.pin, uim_req_data.pin),
-		QMI_INIT_PTR(info.protection_enabled, is_enabled)
+		QMI_INIT_PTR(info.pin_value, uim_req_data.pin),
+		QMI_INIT_PTR(info.pin_enabled, is_enabled)
 	};
 
-	qmi_set_dms_uim_set_pin_protection_request(msg, &req);
+	qmi_set_uim_set_pin_protection_request(msg, &request);
 	return QMI_CMD_REQUEST;
 }
 

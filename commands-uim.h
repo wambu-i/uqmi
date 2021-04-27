@@ -24,17 +24,18 @@
 	__uqmi_command(uim_verify_pin2, uim-verify-pin2, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_iccid, uim-get-iccid, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_get_imsi, uim-get-imsi, required, QMI_SERVICE_UIM), \
-	__uqmi_command(uim_read_transparent, uim-read-transparent, QMI_SERVICE_UIM), \
+	__uqmi_command(uim_read_transparent, uim-read-transparent, required, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_set_pin1_protection, uim-set-pin1-protection, required, QMI_SERVICE_UIM), \
-	__uqmi_command(uim_set_pin2_protection, uim-set-pin2-protection, required, QMI_SERVICE_UIM) \
+	__uqmi_command(uim_set_pin2_protection, uim-set-pin2-protection, required, QMI_SERVICE_UIM), \
+	__uqmi_command(uim_set_pin, uim-pin, required, CMD_TYPE_OPTION) \
 
 #define uim_helptext \
 		"  --uim-verify-pin1 <pin>:          Verify PIN1 (new devices)\n" \
 		"  --uim-verify-pin2 <pin>:          Verify PIN2 (new devices)\n" \
 		"  --uim-get-iccid <file path>:      Get ICCID from SIM using specified file path\n" \
 		"  --uim-get-imsi <file path>:       Get IMSI from SIM using specified file path\n" \
-		"  --uim-read-transparent <file path>: Read from specific SIM file path\n"
+		"  --uim-read-transparent <file path>: Read from specific SIM file path\n" \
 		"  --uim-set-pin1-protection <state>:    Set PIN1 protection state (disabled, enabled)\n" \
-		"    --pin <pin>:                    PIN1 needed to change state\n" \
+		"    --uim-pin <pin>:                    PIN1 needed to change state\n" \
 		"  --uim-set-pin2-protection <state>:    Set PIN2 protection state (disabled, enabled)\n" \
-		"    --pin <pin2>:                   PIN2 needed to change state\n"
+		"    --uim-pin <pin2>:                   PIN2 needed to change state\n"
