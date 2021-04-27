@@ -42,9 +42,9 @@
 		"    --uim-pin <pin>:                PIN1 needed to change state\n" \
 		"  --uim-set-pin2-protection <state>: Set PIN2 protection state (disabled, enabled)\n" \
 		"    --uim-pin <pin2>:                PIN2 needed to change state\n" \
-		"  --change-pin1:                     Change PIN1\n" \
-		"    --pin <old pin>:                 Current PIN1\n" \
-		"    --new-pin <new pin>:             New pin\n" \
-		"  --change-pin2:                     Change PIN2\n" \
-		"    --pin <old pin>:                 Current PIN2\n" \
-		"    --new-pin <new pin>:             New pin\n" \
+		"  --uim-change-pin1:                     Change PIN1\n" \
+		"    --uim-pin <old pin>:                 Current PIN1\n" \
+		"    --uim-new-pin <new pin>:             New pin\n" \
+		"  --uim-change-pin2:                     Change PIN2\n" \
+		"    --uim-pin <old pin>:                 Current PIN2\n" \
+		"    --uim-new-pin <new pin>:             New pin\n"

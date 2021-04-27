@@ -336,11 +336,15 @@ cmd_uim_set_pin_protection_prepare(struct qmi_msg *msg, char *arg)
 	}
 
 	struct qmi_uim_set_pin_protection_request request = {
+		QMI_INIT_SEQUENCE(session_information,
+                        .session_type = QMI_UIM_SESSION_TYPE_CARD_SLOT_1,
+                        .application_identifier = "{}"
+                ),
 		QMI_INIT_SEQUENCE(info,
-			.pin_id = uim_req_data.pin_id
-		),
-		QMI_INIT_PTR(info.pin_value, uim_req_data.pin),
-		QMI_INIT_PTR(info.pin_enabled, is_enabled)
+			.pin_id = uim_req_data.pin_id,
+			.pin_value = uim_req_data.pin,
+			.pin_enabled = is_enabled
+		)
 	};
 
 	qmi_set_uim_set_pin_protection_request(msg, &request);
@@ -374,7 +378,7 @@ cmd_uim_change_pin_prepare(struct qmi_msg *msg, char *arg)
 	struct qmi_uim_change_pin_request uim_change_pin_req = {
 		QMI_INIT_SEQUENCE(session_information,
 			.session_type = QMI_UIM_SESSION_TYPE_CARD_SLOT_1,
-			.application_identifier = ""
+			.application_identifier = "{}"
 		),
 		QMI_INIT_SEQUENCE(info,
 			.pin_id = uim_req_data.pin_id
