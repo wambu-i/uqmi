@@ -362,3 +362,51 @@ cmd_uim_set_pin2_protection_prepare(struct qmi_dev *qmi, struct qmi_request *req
 	uim_req_data.pin_id = QMI_UIM_PIN_ID_PIN2;
 	return cmd_uim_set_pin_protection_prepare(msg, arg);
 }
+
+static enum qmi_cmd_result
+cmd_uim_change_pin_prepare(struct qmi_msg *msg, char *arg)
+{
+	if (!uim_req_data.pin || !uim_req_data.new_pin) {
+		uqmi_add_error("Missing argument");
+		return QMI_CMD_EXIT;
+	}
+
+	struct qmi_uim_change_pin_request uim_change_pin_req = {
+		QMI_INIT_SEQUENCE(session_information,
+			.session_type = QMI_UIM_SESSION_TYPE_CARD_SLOT_1,
+			.application_identifier = ""
+		),
+		QMI_INIT_SEQUENCE(info,
+			.pin_id = uim_req_data.pin_id
+		),
+		QMI_INIT_PTR(info.old_pin, uim_req_data.pin),
+		QMI_INIT_PTR(info.new_pin, uim_req_data.new_pin)
+	};
+
+	qmi_set_uim_change_pin_request(msg, &uim_change_pin_req);
+	return QMI_CMD_REQUEST;
+}
+
+#define cmd_uim_change_pin1_cb no_cb
+static enum qmi_cmd_result
+cmd_uim_change_pin1_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	uim_req_data.pin_id = QMI_UIM_PIN_ID_PIN1;
+	return cmd_uim_change_pin_prepare(msg, arg);
+}
+
+#define cmd_uim_change_pin2_cb no_cb
+static enum qmi_cmd_result
+cmd_uim_change_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	uim_req_data.pin_id = QMI_UIM_PIN_ID_PIN2;
+	return cmd_uim_change_pin_prepare(msg, arg);
+}
+
+#define cmd_uim_set_new_pin_cb no_cb
+static enum qmi_cmd_result
+cmd_uim_set_new_pin_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	uim_req_data.new_pin = arg;
+	return QMI_CMD_DONE;
+}
