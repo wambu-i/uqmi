@@ -430,7 +430,7 @@ static void cmd_uim_change_pin1_cb(struct qmi_dev *qmi, struct qmi_request *req,
 
 	qmi_parse_uim_change_pin_response(msg, &res);
 	if (res.set.card_result) {
-		blobmsg_add_string(&status, NULL, "PIN1 updated.");
+		blobmsg_add_string(&status, NULL, "PIN1 changed successfully.");
 	}
 }
 static enum qmi_cmd_result
@@ -454,4 +454,84 @@ cmd_uim_set_new_pin_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 {
 	uim_req_data.new_pin = arg;
 	return QMI_CMD_DONE;
+}
+
+static const char *qmi_uim_get_pin_status(int status)
+{
+	static const char *card_status[] = {
+		[QMI_UIM_PIN_STATUS_NOT_INITIALIZED] = "not_initialized",
+		[QMI_UIM_PIN_STATUS_ENABLED_NOT_VERIFIED] = "not_verified",
+		[QMI_UIM_PIN_STATUS_ENABLED_VERIFIED] = "verified",
+		[QMI_UIM_PIN_STATUS_DISABLED] = "disabled",
+		[QMI_UIM_PIN_STATUS_BLOCKED] = "blocked",
+		[QMI_UIM_PIN_STATUS_PERMANENTLY_BLOCKED] = "permanently_blocked",
+		[QMI_UIM_PIN_STATUS_UNBLOCKED] = "unblocked",
+		[QMI_UIM_PIN_STATUS_CHANGED] = "changed",
+	};
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(card_status) && card_status[status])
+		res = card_status[status];
+
+	return res;
+}
+
+static const char *qmi_uim_get_card_status(int status) {
+	static const char *card_status[] = {
+		[QMI_UIM_CARD_STATE_ABSENT]  = "Absent",
+		[QMI_UIM_CARD_STATE_PRESENT] = "Present",
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(card_status) && card_status[status])
+		res = card_status[status];
+
+	return res;
+}
+
+static const char *qmi_uim_get_card_error_string(int status) {
+	static const char *card_error[] = {
+		[QMI_UIM_CARD_ERROR_UNKNOWN] = "Unknown error",
+		[QMI_UIM_CARD_ERROR_POWER_DOWN] = "Power down",
+		[QMI_UIM_CARD_ERROR_POLL] = "Poll error",
+		[QMI_UIM_CARD_ERROR_NO_ATR_RECEIVED] = "No ATR received",
+		[QMI_UIM_CARD_ERROR_VOLTAGE_MISMATCH] = "Voltage mismatch",
+		[QMI_UIM_CARD_ERROR_PARITY] = "Parity error",
+		[QMI_UIM_CARD_ERROR_POSSIBLY_REMOVED] = "Unknown error, possibly removed"
+		[QMI_UIM_CARD_ERROR_TECHNICAL] = "Technical problem"
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(card_error) && card_error[status])
+		res = card_status[status];
+
+	return res;
+}
+
+static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+{
+	struct qmi_uim_get_card_status_response res;
+	void *c;
+
+	qmi_parse_uim_get_card_status_response(msg, &res);
+	c = blobmsg_open_table(&status, NULL);
+	if (res.set.card_status) {
+		for (int i = 0; i < res.set.card_status.cards_n; i++) {
+			blobmsg_add_u8(&status, "Slot: ", i + 1);
+			if (res.data.card_status.cards[i].card_state != QMI_UIM_CARD_STATE_ERROR)
+				blobmsg_add_string(&status, "Card State: ", qmi_uim_get_card_status(res.data.card_status.cards[i]).card_state);
+			else
+				blobmsg_add_string(&status, "Card State: Error: ", qmi_uim_get_card_error_string(res.data.card_status.cards[i]).error_code);
+			blobmsg_add_string(&status, "UPIN State: ", qmi_uim_get_pin_status(res.data.card_status.cards[i].upin_state));
+		}
+	blobmsg_close_table(&status, c);
+}
+
+static enum qmi_cmd_result
+cmd_uim_get_card_status_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	qmi_set_uim_get_card_status_request(msg);
+	return QMI_CMD_REQUEST;
 }
