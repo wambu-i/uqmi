@@ -83,7 +83,8 @@ cmd_uim_verify_pin2_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 	return QMI_CMD_REQUEST;
 }
 
-static char **split_string(const char *string) {
+static char **split_string(const char *string)
+{
 	char **result = malloc (sizeof (char *) * MAX);
 	char *tmp = (char *) string;
 	int i = 0;
@@ -99,11 +100,23 @@ static char **split_string(const char *string) {
 	return result;
 }
 
-static stack *create_stack() {
+static void reverse_string(char* str)
+{
+    int len = strlen(str);
+
+    for (int i = 0, j = len - 1; i < j; i++, j--) {
+        char ch = str[i];
+        str[i] = str[j];
+        str[j] = ch;
+    }
+}
+
+static stack *create_stack()
+{
     stack *new = malloc(sizeof(*new));
     if (!new) {
         fprintf(stderr, "Could not allocate new memory!");
-	return NULL;
+		return NULL;
     }
 
     new->top = -1;
@@ -113,9 +126,11 @@ static stack *create_stack() {
     return new;
 }
 
-static bool push(stack *stack, uint8_t val) {
+static bool push(stack *stack, uint8_t val)
+{
     if (stack->top == MAX - 1) return false;
-    stack->args[++stack->top] = val;
+
+	stack->args[++stack->top] = val;
     stack->len++;
     return true;
 }
@@ -169,7 +184,7 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 		memset(result, 0, len * 2);
 		for (int i = 0; i < len; i++) {
 			sprintf(tmp, "%02X", res.data.read_result[i]);
-			printf("Tmp - %s\n", tmp);
+			reverse_string(tmp);
 			strcat(result, tmp);
 		}
 		printf("ICCID is %s\n", result);
@@ -178,6 +193,7 @@ cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_ms
 		printf("Error getting information!\n");
 	}
 }
+
 static enum qmi_cmd_result
 cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
@@ -277,7 +293,26 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 	return QMI_CMD_REQUEST;
 }
 
-#define cmd_uim_read_transparent_cb no_cb
+static void
+cmd_uim_read_transparent_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+{
+	struct qmi_uim_read_transparent_response res;
+	qmi_parse_uim_read_transparent_response(msg, &res);
+
+	if (res.set.card_result) {
+		int len = res.data.read_result_n;
+		char tmp[MAX];
+		char result[len * 2];
+		memset(result, 0, len * 2);
+		for (int i = 0; i < len; i++) {
+			sprintf(tmp, "%02X", res.data.read_result[i]);
+			reverse_string(tmp);
+			strcat(result, tmp);
+		}
+		blobmsg_add_string(&status, NULL, result);
+	}
+}
+
 static enum qmi_cmd_result
 cmd_uim_read_transparent_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
@@ -289,12 +324,7 @@ cmd_uim_read_transparent_prepare(struct qmi_dev *qmi, struct qmi_request *req, s
 	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
 		return QMI_CMD_EXIT;
 
-	printf("Len of arguments %d\n", new->len);
-
 	path = new->args;
-	for (int i = 0; i < new->len; i++) {
-		printf("Argument at %d is %d\n", i, path[i]);
-	}
 
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
