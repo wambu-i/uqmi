@@ -30,7 +30,7 @@
 	__uqmi_command(uim_set_pin, uim-pin, required, CMD_TYPE_OPTION), \
 	__uqmi_command(uim_change_pin1, uim-change-pin1, no, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_change_pin2, uim-change-pin2, no, QMI_SERVICE_UIM), \
-	__uqmi_command(uim_set_new_pin, uim-new-pin, required, CMD_TYPE_OPTION) \
+	__uqmi_command(uim_set_new_pin, uim-new-pin, required, CMD_TYPE_OPTION), \
 	__uqmi_command(uim_get_card_status, uim_get_card_status, no, QMI_SERVICE_UIM) \
 
 #define uim_helptext \
