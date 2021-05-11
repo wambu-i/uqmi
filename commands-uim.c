@@ -24,9 +24,9 @@
 typedef struct stack stack;
 
 struct stack {
-    int top;
-    int len;
-    uint8_t *args;
+	int top;
+	int len;
+	uint8_t *args;
 };
 
 static struct {
@@ -102,37 +102,37 @@ static char **split_string(const char *string)
 
 static void reverse_string(char* str)
 {
-    int len = strlen(str);
+	int len = strlen(str);
 
-    for (int i = 0, j = len - 1; i < j; i++, j--) {
-        char ch = str[i];
-        str[i] = str[j];
-        str[j] = ch;
-    }
+	for (int i = 0, j = len - 1; i < j; i++, j--) {
+		char ch = str[i];
+		str[i] = str[j];
+		str[j] = ch;
+	}
 }
 
 static stack *create_stack()
 {
-    stack *new = malloc(sizeof(*new));
-    if (!new) {
-        fprintf(stderr, "Could not allocate new memory!");
+	stack *new = malloc(sizeof(*new));
+	if (!new) {
+		fprintf(stderr, "Could not allocate new memory!");
 		return NULL;
-    }
+	}
 
-    new->top = -1;
-    new->len = 0;
-    new->args = malloc(sizeof(uint8_t) * MAX);
+	new->top = -1;
+	new->len = 0;
+	new->args = malloc(sizeof(uint8_t) * MAX);
 
-    return new;
+	return new;
 }
 
 static bool push(stack *stack, uint8_t val)
 {
-    if (stack->top == MAX - 1) return false;
+	if (stack->top == MAX - 1) return false;
 
 	stack->args[++stack->top] = val;
-    stack->len++;
-    return true;
+	stack->len++;
+	return true;
 }
 
 static bool
@@ -171,6 +171,20 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 	return true;
 }
 
+static char *read_raw_data(int len, uint8_t *read_result, bool reversed)
+{
+	char tmp[MAX];
+	char result[len * 2];
+	memset(result, 0, len * 2);
+	for (int i = 0; i < len; i++) {
+		sprintf(tmp, "%02X", read_result[i]);
+		if (reversed) reverse_string(tmp);
+		strcat(result, tmp);
+	}
+
+	return result;
+}
+
 static void
 cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
@@ -204,12 +218,7 @@ cmd_uim_get_iccid_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct q
 	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
 		return QMI_CMD_EXIT;
 
-	printf("Len of arguments %d\n", new->len);
-
 	path = new->args;
-	for (int i = 0; i < new->len; i++) {
-                printf("Argument at %d is %d\n", i, path[i]);
-        }
 
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
@@ -263,8 +272,6 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 
 	if (!get_sim_file_id_and_path_with_separator(arg, &id, new, ","))
 		return QMI_CMD_EXIT;
-
-	printf("Len of arguments %d\n", new->len);
 
 	path = new->args;
 	for (int i = 0; i < new->len; i++) {
@@ -352,7 +359,6 @@ cmd_uim_read_transparent_prepare(struct qmi_dev *qmi, struct qmi_request *req, s
 static enum qmi_cmd_result
 cmd_uim_set_pin_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
-	printf("PIN is provided as %s\n", arg);
 	uim_req_data.pin = arg;
 	return QMI_CMD_DONE;
 }
@@ -361,10 +367,9 @@ static enum qmi_cmd_result
 cmd_uim_set_pin_protection_prepare(struct qmi_msg *msg, char *arg)
 {
 	if (!uim_req_data.pin) {
-		uqmi_add_error("Sucks - Missing argument");
+		uqmi_add_error("Missing argument");
 		return QMI_CMD_EXIT;
 	}
-	printf("Arg is %s, pin is %s, and id is %d\n", arg, uim_req_data.pin, uim_req_data.pin_id);
 
 	bool is_enabled;
 	if (strcasecmp(arg, "disabled") == 0)
@@ -376,12 +381,11 @@ cmd_uim_set_pin_protection_prepare(struct qmi_msg *msg, char *arg)
 		return QMI_CMD_EXIT;
 	}
 
-	printf("Arg is %s, pin is %s, and id is %d, status is %d\n", arg, uim_req_data.pin, uim_req_data.pin_id, is_enabled);
 	struct qmi_uim_set_pin_protection_request request = {
 		QMI_INIT_SEQUENCE(session_information,
-            .session_type = QMI_UIM_SESSION_TYPE_CARD_SLOT_1,
-            .application_identifier = "{}"
-        ),
+			.session_type = QMI_UIM_SESSION_TYPE_CARD_SLOT_1,
+			.application_identifier = "{}"
+		),
 		QMI_INIT_SEQUENCE(info,
 			.pin_id = uim_req_data.pin_id,
 			.pin_value = uim_req_data.pin,
@@ -467,12 +471,12 @@ cmd_uim_set_new_pin_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct
 static const char *qmi_uim_get_pin_status(int status)
 {
 	static const char *card_status[] = {
-		[QMI_UIM_PIN_STATE_NOT_INITIALIZED] = "not_initialized",
-		[QMI_UIM_PIN_STATE_ENABLED_NOT_VERIFIED] = "not_verified",
+		[QMI_UIM_PIN_STATE_NOT_INITIALIZED] = "not-initialized",
+		[QMI_UIM_PIN_STATE_ENABLED_NOT_VERIFIED] = "not-verified",
 		[QMI_UIM_PIN_STATE_ENABLED_VERIFIED] = "verified",
 		[QMI_UIM_PIN_STATE_DISABLED] = "disabled",
 		[QMI_UIM_PIN_STATE_BLOCKED] = "blocked",
-		[QMI_UIM_PIN_STATE_PERMANENTLY_BLOCKED] = "permanently_blocked",
+		[QMI_UIM_PIN_STATE_PERMANENTLY_BLOCKED] = "permanently-blocked",
 	};
 	const char *res = "Unknown";
 
@@ -484,8 +488,8 @@ static const char *qmi_uim_get_pin_status(int status)
 
 static const char *qmi_uim_get_card_status(int status) {
 	static const char *card_status[] = {
-		[QMI_UIM_CARD_STATE_ABSENT]  = "Absent",
-		[QMI_UIM_CARD_STATE_PRESENT] = "Present",
+		[QMI_UIM_CARD_STATE_ABSENT]  = "absent",
+		[QMI_UIM_CARD_STATE_PRESENT] = "present",
 	};
 
 	const char *res = "Unknown";
@@ -498,20 +502,58 @@ static const char *qmi_uim_get_card_status(int status) {
 
 static const char *qmi_uim_get_card_error_string(int status) {
 	static const char *card_error[] = {
-		[QMI_UIM_CARD_ERROR_UNKNOWN] = "Unknown error",
-		[QMI_UIM_CARD_ERROR_POWER_DOWN] = "Power down",
-		[QMI_UIM_CARD_ERROR_POLL] = "Poll error",
-		[QMI_UIM_CARD_ERROR_NO_ATR_RECEIVED] = "No ATR received",
-		[QMI_UIM_CARD_ERROR_VOLTAGE_MISMATCH] = "Voltage mismatch",
-		[QMI_UIM_CARD_ERROR_PARITY] = "Parity error",
-		[QMI_UIM_CARD_ERROR_POSSIBLY_REMOVED] = "Unknown error, possibly removed",
-		[QMI_UIM_CARD_ERROR_TECHNICAL] = "Technical problem",
+		[QMI_UIM_CARD_ERROR_UNKNOWN] = "unknown-error",
+		[QMI_UIM_CARD_ERROR_POWER_DOWN] = "power-down",
+		[QMI_UIM_CARD_ERROR_POLL] = "poll-error",
+		[QMI_UIM_CARD_ERROR_NO_ATR_RECEIVED] = "no-ATR-received",
+		[QMI_UIM_CARD_ERROR_VOLTAGE_MISMATCH] = "voltage-mismatch",
+		[QMI_UIM_CARD_ERROR_PARITY] = "parity-error",
+		[QMI_UIM_CARD_ERROR_POSSIBLY_REMOVED] = "unknown-error-possibly-removed",
+		[QMI_UIM_CARD_ERROR_TECHNICAL] = "technical-problem",
 	};
 
 	const char *res = "Unknown";
 
 	if (status < ARRAY_SIZE(card_error) && card_error[status])
 		res = card_error[status];
+
+	return res;
+}
+
+static const char *qmi_uim_get_application_type_string(int status) {
+	static const char *application_type[] = {
+		[QMI_UIM_CARD_APPLICATION_TYPE_UNKNOWN] = "unknown",
+		[QMI_UIM_CARD_APPLICATION_TYPE_SIM]     = "sim",
+		[QMI_UIM_CARD_APPLICATION_TYPE_USIM]    = "usim",
+		[QMI_UIM_CARD_APPLICATION_TYPE_RUIM]    = "ruim",
+		[QMI_UIM_CARD_APPLICATION_TYPE_CSIM]    = "csim",
+		[QMI_UIM_CARD_APPLICATION_TYPE_ISIM]    = "isim",
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(application_type) && application_type[status])
+		res = application_type[status];
+
+	return res;
+}
+
+static const char *qmi_uim_get_application_type_string(int status) {
+	static const char *application_state[] = {
+		[QMI_UIM_CARD_APPLICATION_STATE_UNKNOWN]               	     = "unknown",
+		[QMI_UIM_CARD_APPLICATION_STATE_DETECTED]                    = "detected",
+		[QMI_UIM_CARD_APPLICATION_STATE_PIN1_OR_UPIN_PIN_REQUIRED]   = "pin1-or-upin-pin-required",
+		[QMI_UIM_CARD_APPLICATION_STATE_PUK1_OR_UPIN_PUK_REQUIRED]   = "puk1-or-upin-required",
+		[QMI_UIM_CARD_APPLICATION_STATE_CHECK_PERSONALIZATION_STATE] = "personalization-state-must-be-checked",
+		[QMI_UIM_CARD_APPLICATION_STATE_PIN1_BLOCKED]                = "pin1-blocked",
+		[QMI_UIM_CARD_APPLICATION_STATE_ILLEGAL]                     = "illegal",
+		[QMI_UIM_CARD_APPLICATION_STATE_READY]                       = "ready",
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(application_state) && application_state[status])
+		res = application_state[status];
 
 	return res;
 }
@@ -533,6 +575,14 @@ static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *
 			else
 				blobmsg_add_string(&status, "Card State: Error: ", qmi_uim_get_card_error_string(state));
 			blobmsg_add_string(&status, "UPIN State: ", qmi_uim_get_pin_status(res.data.card_status.cards[i].upin_state));
+
+			for (int j = 0; i < res.data.card_status.cards->applications_n; i++) {
+				blobmsg_add_u8(&status, "\tApplication: ", j + 1);
+				blobmsg_add_string(&status, "\t\tApplication type: ", qmi_uim_get_application_type_string(res.data.card_status.cards[i].applications[j].type));
+				blobmsg_add_string(&status, "\t\tApplication state: ", qmi_uim_get_application_state_string(res.data.card_status.cards[i].applications[j].state));
+				blobmsg_add_string(&status, "\t\tApplication ID: ", read_raw_data(res.data.card_status.cards[i].applications[i].application_identifier_value_n, res.data.card_status.cards[i].applications[j].application_identifier_value));
+			}
+
 		}
 	blobmsg_close_table(&status, c);
 	}
