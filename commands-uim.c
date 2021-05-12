@@ -599,7 +599,7 @@ static const char *qmi_uim_get_personalization_feature_string(int status) {
 static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_uim_get_card_status_response res;
-	void *c, *slots, *slot, *application, *applications;
+	void *c, *slots, *slot, *application, *applications, *pin1, *pin2;
 	int state;
 
 	qmi_parse_uim_get_card_status_response(msg, &res);
@@ -641,7 +641,17 @@ static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *
 				blobmsg_add_string(&status, "UPIN replaces PIN1", res.data.card_status.cards[i].applications[j].upin_replaces_pin1 ? "yes" : "no");
 
 				blobmsg_add_string(&status, "PIN1 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin1_state));
+				pin1 = blobmsg_open_table(&status, NULL);
+				blobmsg_add_u32(&status, "PIN1 retries", (int32_t) res.data.card_status.cards[i].applications[j].pin1_retries);
+				blobmsg_add_u32(&status, "PUK1 retries", (int32_t) res.data.card_status.cards[i].applications[j].puk1_retries);
+				blobmsg_close_table(&status, pin1);
+
 				blobmsg_add_string(&status, "PIN2 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin2_state));
+				pin2 = blobmsg_open_table(&status, NULL);
+				blobmsg_add_u32(&status, "PIN2 retries", (int32_t) res.data.card_status.cards[i].applications[j].pin2_retries);
+				blobmsg_add_u32(&status, "PUK2 retries", (int32_t) res.data.card_status.cards[i].applications[j].puk2_retries);
+				blobmsg_close_table(&status, pin2);
+
 				blobmsg_close_table(&status, application);
 			}
 			blobmsg_close_array(&status, applications);
