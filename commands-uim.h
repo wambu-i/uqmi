@@ -31,7 +31,7 @@
 	__uqmi_command(uim_change_pin1, uim-change-pin1, no, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_change_pin2, uim-change-pin2, no, QMI_SERVICE_UIM), \
 	__uqmi_command(uim_set_new_pin, uim-new-pin, required, CMD_TYPE_OPTION), \
-	__uqmi_command(uim_get_card_status, uim_get_card_status, no, QMI_SERVICE_UIM) \
+	__uqmi_command(uim_get_card_status, uim-get-card-status, no, QMI_SERVICE_UIM) \
 
 #define uim_helptext \
 		"  --uim-verify-pin1 <pin>:          Verify PIN1 (new devices)\n" \
@@ -49,4 +49,4 @@
 		"  --uim-change-pin2:                     Change PIN2\n" \
 		"    --uim-pin <old pin>:                 Current PIN2\n" \
 		"    --uim-new-pin <new pin>:             New pin\n" \
-		"  --uim-get-card-status:				  Get Card Status"
+		"  --uim-get-card-status:				  Get Card Status\n"

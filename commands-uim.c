@@ -174,7 +174,7 @@ get_sim_file_id_and_path_with_separator(const char *file_path_str, uint16_t *fil
 static char *read_raw_data(int len, uint8_t *read_result, bool reversed)
 {
 	char tmp[MAX];
-	char result[len * 2];
+	char *result = malloc(sizeof(char) * len * 2);
 	memset(result, 0, len * 2);
 	for (int i = 0; i < len; i++) {
 		sprintf(tmp, "%02X", read_result[i]);
@@ -251,14 +251,13 @@ cmd_uim_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg
 	if (res.set.card_result) {
 		char tmp[5];
 		int len = res.data.read_result_n;
+		char result[len * 2];
+		memset(result, 0, len * 2);
 		for (int i = 0; i < len; i++) {
 			sprintf(tmp, "%02X", res.data.read_result[i]);
-			printf("Tmp - %s\n", tmp);
+			strcat(result, tmp);
 		}
-		printf("SW1 %d\n", res.data.card_result.sw1);
-	}
-	else {
-		printf("Error getting information!\n");
+		blobmsg_add_string(&status, NULL, result);
 	}
 }
 
@@ -274,9 +273,6 @@ cmd_uim_get_imsi_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qm
 		return QMI_CMD_EXIT;
 
 	path = new->args;
-	for (int i = 0; i < new->len; i++) {
-		printf("Argument at %d is %d\n", i, path[i]);
-	}
 
 	struct qmi_uim_read_transparent_request data = {
 		QMI_INIT_SEQUENCE(session_information,
@@ -472,7 +468,7 @@ static const char *qmi_uim_get_pin_status(int status)
 {
 	static const char *card_status[] = {
 		[QMI_UIM_PIN_STATE_NOT_INITIALIZED] = "not-initialized",
-		[QMI_UIM_PIN_STATE_ENABLED_NOT_VERIFIED] = "not-verified",
+		[QMI_UIM_PIN_STATE_ENABLED_NOT_VERIFIED] = "enabled-not-verified",
 		[QMI_UIM_PIN_STATE_ENABLED_VERIFIED] = "verified",
 		[QMI_UIM_PIN_STATE_DISABLED] = "disabled",
 		[QMI_UIM_PIN_STATE_BLOCKED] = "blocked",
@@ -538,7 +534,7 @@ static const char *qmi_uim_get_application_type_string(int status) {
 	return res;
 }
 
-static const char *qmi_uim_get_application_type_string(int status) {
+static const char *qmi_uim_get_application_state_string(int status) {
 	static const char *application_state[] = {
 		[QMI_UIM_CARD_APPLICATION_STATE_UNKNOWN]               	     = "unknown",
 		[QMI_UIM_CARD_APPLICATION_STATE_DETECTED]                    = "detected",
@@ -558,34 +554,102 @@ static const char *qmi_uim_get_application_type_string(int status) {
 	return res;
 }
 
+static const char *qmi_uim_get_personalization_state_string(int status) {
+	static const char *personalization_state[] = {
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_UNKNOWN]             = "unknown",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_IN_PROGRESS]         = "in-progress",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_READY]               = "ready",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_CODE_REQUIRED]       = "code-required",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_PUK_CODE_REQUIRED]   = "puk-code-required",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_PERMANENTLY_BLOCKED] = "permanently-blocked",
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(personalization_state) && personalization_state[status])
+		res = personalization_state[status];
+
+	return res;
+}
+
+static const char *qmi_uim_get_personalization_feature_string(int status) {
+	static const char *personalization_feature[] = {
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_GW_NETWORK]          = "gw-network",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_GW_NETWORK_SUBSET]   = "gw-network-subset",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_GW_SERVICE_PROVIDER] = "gw-service-provider",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_GW_CORPORATE]        = "gw-corporate",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_GW_UIM]              = "gw-uim",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_NETWORK_TYPE_1]   = "1x-network-type-1",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_NETWORK_TYPE_2]   = "1x-network-type-2",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_HRPD]             = "1x-hrpd",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_SERVICE_PROVIDER] = "1x-service-provider",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_CORPORATE]        = "1x-corporate",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_1X_RUIM]             = "1x-ruim",
+		[QMI_UIM_CARD_APPLICATION_PERSONALIZATION_FEATURE_UNKNOWN]             = "unknown",
+	};
+
+	const char *res = "Unknown";
+
+	if (status < ARRAY_SIZE(personalization_feature) && personalization_feature[status])
+		res = personalization_feature[status];
+
+	return res;
+}
+
 static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_uim_get_card_status_response res;
-	void *c;
+	void *c, *slots, *slot, *application, *applications;
 	int state;
 
 	qmi_parse_uim_get_card_status_response(msg, &res);
+
 	c = blobmsg_open_table(&status, NULL);
+	slots = blobmsg_open_array(&status, "slots");
+
 	if (res.set.card_status) {
 		for (int i = 0; i < res.data.card_status.cards_n; i++) {
-			blobmsg_add_u8(&status, "Slot: ", i + 1);
+			slot = blobmsg_open_table(&status, NULL);
+			blobmsg_add_u32(&status, "Slot ", (int32_t) i + 1);
 			state = res.data.card_status.cards[i].card_state;
 			if (state != QMI_UIM_CARD_STATE_ERROR)
-				blobmsg_add_string(&status, "Card State: ", qmi_uim_get_card_status(state));
+				blobmsg_add_string(&status, "Card State", qmi_uim_get_card_status(state));
 			else
-				blobmsg_add_string(&status, "Card State: Error: ", qmi_uim_get_card_error_string(state));
-			blobmsg_add_string(&status, "UPIN State: ", qmi_uim_get_pin_status(res.data.card_status.cards[i].upin_state));
+				blobmsg_add_string(&status, "Error", qmi_uim_get_card_error_string(state));
+			blobmsg_add_string(&status, "UPIN State", qmi_uim_get_pin_status(res.data.card_status.cards[i].upin_state));
+			blobmsg_add_u32(&status, "UPIN retries", (int32_t) res.data.card_status.cards[i].upin_retries);
+			blobmsg_add_u32(&status, "UPUK retries", (int32_t) res.data.card_status.cards[i].upuk_retries);
 
-			for (int j = 0; i < res.data.card_status.cards->applications_n; i++) {
-				blobmsg_add_u8(&status, "\tApplication: ", j + 1);
-				blobmsg_add_string(&status, "\t\tApplication type: ", qmi_uim_get_application_type_string(res.data.card_status.cards[i].applications[j].type));
-				blobmsg_add_string(&status, "\t\tApplication state: ", qmi_uim_get_application_state_string(res.data.card_status.cards[i].applications[j].state));
-				blobmsg_add_string(&status, "\t\tApplication ID: ", read_raw_data(res.data.card_status.cards[i].applications[i].application_identifier_value_n, res.data.card_status.cards[i].applications[j].application_identifier_value));
+			applications = blobmsg_open_array(&status, "applications");
+
+			for (int j = 0; j < res.data.card_status.cards->applications_n; j++) {
+				application = blobmsg_open_table(&status, NULL);
+				blobmsg_add_u32(&status, "Application: ", (int32_t) j + 1);
+				blobmsg_add_string(&status, "Application type: ", qmi_uim_get_application_type_string(res.data.card_status.cards[i].applications[j].type));
+				blobmsg_add_string(&status, "Application state: ", qmi_uim_get_application_state_string(res.data.card_status.cards[i].applications[j].state));
+				blobmsg_add_string(&status, "Application ID: ", read_raw_data(res.data.card_status.cards[i].applications[i].application_identifier_value_n, res.data.card_status.cards[i].applications[j].application_identifier_value, false));
+				if (res.data.card_status.cards[i].applications[j].personalization_state == QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_CODE_REQUIRED ||
+					res.data.card_status.cards[i].applications[j].personalization_state == QMI_UIM_CARD_APPLICATION_PERSONALIZATION_STATE_PUK_CODE_REQUIRED) {
+					blobmsg_add_string(&status, "Personalization state", qmi_uim_get_personalization_state_string(res.data.card_status.cards[i].applications[j].personalization_state));
+					blobmsg_add_string(&status, "Personalization feature", qmi_uim_get_personalization_feature_string(res.data.card_status.cards[i].applications[j].personalization_feature));
+					blobmsg_add_u32(&status, "Disable retries", (int32_t) res.data.card_status.cards[i].applications[j].personalization_retries);
+					blobmsg_add_u32(&status, "Unblock retries", (int32_t) res.data.card_status.cards[i].applications[j].personalization_unblock_retries);
+					}
+				else {
+					blobmsg_add_string(&status, "Personalization state", qmi_uim_get_personalization_state_string(res.data.card_status.cards[i].applications[j].personalization_state));
+				}
+				blobmsg_add_string(&status, "UPIN replaces PIN1", res.data.card_status.cards[i].applications[j].upin_replaces_pin1 ? "yes" : "no");
+
+				blobmsg_add_string(&status, "PIN1 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin1_state));
+				blobmsg_add_string(&status, "PIN2 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin2_state));
+				blobmsg_close_table(&status, application);
 			}
-
+			blobmsg_close_array(&status, applications);
+			blobmsg_close_table(&status, slot);
 		}
-	blobmsg_close_table(&status, c);
+		blobmsg_close_array(&status, slots);
 	}
+	blobmsg_close_table(&status, c);
 }
 
 static enum qmi_cmd_result
