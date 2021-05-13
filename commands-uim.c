@@ -615,7 +615,7 @@ static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *
 			if (state != QMI_UIM_CARD_STATE_ERROR)
 				blobmsg_add_string(&status, "Card State", qmi_uim_get_card_status(state));
 			else
-				blobmsg_add_string(&status, "Error", qmi_uim_get_card_error_string(state));
+				blobmsg_add_string(&status, "Card Error", qmi_uim_get_card_error_string(state));
 			blobmsg_add_string(&status, "UPIN State", qmi_uim_get_pin_status(res.data.card_status.cards[i].upin_state));
 			blobmsg_add_u32(&status, "UPIN retries", (int32_t) res.data.card_status.cards[i].upin_retries);
 			blobmsg_add_u32(&status, "UPUK retries", (int32_t) res.data.card_status.cards[i].upuk_retries);
@@ -664,6 +664,47 @@ static void cmd_uim_get_card_status_cb(struct qmi_dev *qmi, struct qmi_request *
 
 static enum qmi_cmd_result
 cmd_uim_get_card_status_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	qmi_set_uim_get_card_status_request(msg);
+	return QMI_CMD_REQUEST;
+}
+
+static void cmd_uim_get_pin1_info_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+{
+	struct qmi_uim_get_card_status_response res;
+	void *c, *pin1, *pin2;
+	int state;
+
+	qmi_parse_uim_get_card_status_response(msg, &res);
+
+	c = blobmsg_open_table(&status, NULL);
+
+	if (res.set.card_status) {
+		for (int i = 0; i < res.data.card_status.cards_n; i++) {
+			for (int j = 0; j < res.data.card_status.cards->applications_n; j++) {
+				char *type = qmi_uim_get_application_type_string(res.data.card_status.cards[i].applications[j].type));
+
+				if (type == "usim") {
+					blobmsg_add_string(&status, "PIN1 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin1_state));
+					pin1 = blobmsg_open_table(&status, NULL);
+					blobmsg_add_u32(&status, "PIN1 retries", (int32_t) res.data.card_status.cards[i].applications[j].pin1_retries);
+					blobmsg_add_u32(&status, "PUK1 retries", (int32_t) res.data.card_status.cards[i].applications[j].puk1_retries);
+					blobmsg_close_table(&status, pin1);
+
+					blobmsg_add_string(&status, "PIN2 state", qmi_uim_get_pin_status(res.data.card_status.cards[i].applications[j].pin2_state));
+					pin2 = blobmsg_open_table(&status, NULL);
+					blobmsg_add_u32(&status, "PIN2 retries", (int32_t) res.data.card_status.cards[i].applications[j].pin2_retries);
+					blobmsg_add_u32(&status, "PUK2 retries", (int32_t) res.data.card_status.cards[i].applications[j].puk2_retries);
+					blobmsg_close_table(&status, pin2);
+				}
+			}
+		}
+	}
+	blobmsg_close_table(&status, c);
+}
+
+static enum qmi_cmd_result
+cmd_uim_get_pin1_info_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
 	qmi_set_uim_get_card_status_request(msg);
 	return QMI_CMD_REQUEST;
