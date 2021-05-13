@@ -31,7 +31,8 @@
 	__uqmi_command(nas_get_signal_info, get-signal-info, no, QMI_SERVICE_NAS), \
 	__uqmi_command(nas_get_serving_system, get-serving-system, no, QMI_SERVICE_NAS), \
 	__uqmi_command(nas_set_network_preference, set-network-preference, required, CMD_TYPE_OPTION), \
-	__uqmi_command(nas_set_roaming, set-network-roaming, required, CMD_TYPE_OPTION) \
+	__uqmi_command(nas_set_roaming, set-network-roaming, required, CMD_TYPE_OPTION), \
+	__uqmi_command(nas_get_home_network, get-home-network, no, QMI_SERVICE_NAS)\
 
 #define nas_helptext \
 		"  --set-network-modes <modes>:      Set usable network modes (Syntax: <mode1>[,<mode2>,...])\n" \
@@ -48,4 +49,5 @@
 		"  --get-plmn:                       Get preferred network selection info\n" \
 		"  --get-signal-info:                Get signal strength info\n" \
 		"  --get-serving-system:             Get serving system info\n" \
+		"  --get-home-network:				 Get Home network info\n"
 

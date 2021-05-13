@@ -406,3 +406,22 @@ cmd_nas_network_scan_prepare(struct qmi_dev *qmi, struct qmi_request *req, struc
 	qmi_set_nas_network_scan_request(msg, &sreq);
 	return QMI_CMD_REQUEST;
 }
+
+static void cmd_nas_get_home_network_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg) {
+	struct qmi_nas_get_home_network_response res;
+	void *t;
+
+	qmi_parse_nas_get_home_network_response(msg, &res);
+
+	t = blobmsg_open_table(&status, NULL);
+	blobmsg_add_string(&status, "Home Network", res.data.home_network.description);
+	blobmsg_add_u32(&status, "MCC", res.data.home_network.mcc);
+	blobmsg_add_u32(&status, "MNC", res.data.home_network.mnc);
+
+	blobmsg_close_table(&status, t);
+}
+static enum qmi_cmd_result
+cmd_nas_get_home_network_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+{
+	qmi_set_nas_get_home_network_request(msg);
+}
