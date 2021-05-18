@@ -189,22 +189,13 @@ static void
 cmd_uim_get_iccid_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_uim_read_transparent_response res;
+	char *result;
+
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
-		int len = res.data.read_result_n;
-		char tmp[MAX];
-		char result[len * 2];
-		memset(result, 0, len * 2);
-		for (int i = 0; i < len; i++) {
-			sprintf(tmp, "%02X", res.data.read_result[i]);
-			reverse_string(tmp);
-			strcat(result, tmp);
-		}
-		printf("ICCID is %s\n", result);
-	}
-	else {
-		printf("Error getting information!\n");
+		result = read_raw_data(res.data.read_result_n, res.data.read_result, true);
+		blobmsg_add_string(&status, NULL, result);
 	}
 }
 
@@ -246,17 +237,12 @@ static void
 cmd_uim_get_imsi_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_uim_read_transparent_response res;
+	char *result;
+
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
-		char tmp[5];
-		int len = res.data.read_result_n;
-		char result[len * 2];
-		memset(result, 0, len * 2);
-		for (int i = 0; i < len; i++) {
-			sprintf(tmp, "%02X", res.data.read_result[i]);
-			strcat(result, tmp);
-		}
+		result = read_raw_data(res.data.read_result_n, res.data.read_result, false);
 		blobmsg_add_string(&status, NULL, result);
 	}
 }
@@ -300,18 +286,12 @@ static void
 cmd_uim_read_transparent_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
 {
 	struct qmi_uim_read_transparent_response res;
+	char *result;
+
 	qmi_parse_uim_read_transparent_response(msg, &res);
 
 	if (res.set.card_result) {
-		int len = res.data.read_result_n;
-		char tmp[MAX];
-		char result[len * 2];
-		memset(result, 0, len * 2);
-		for (int i = 0; i < len; i++) {
-			sprintf(tmp, "%02X", res.data.read_result[i]);
-			reverse_string(tmp);
-			strcat(result, tmp);
-		}
+		result = read_raw_data(res.data.read_result_n, res.data.read_result, false);
 		blobmsg_add_string(&status, NULL, result);
 	}
 }
