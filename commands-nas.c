@@ -424,4 +424,5 @@ static enum qmi_cmd_result
 cmd_nas_get_home_network_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
 {
 	qmi_set_nas_get_home_network_request(msg);
+	return QMI_CMD_REQUEST;
 }
